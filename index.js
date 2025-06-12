@@ -17,7 +17,13 @@ configCloudinary();
 app.use('/api/v1', mainRouter);
 
 app.use((req, res, next) => {
-  return res.status(404).json('Route not found');
+  const error = new Error('Route not found');
+  error.status = 404;
+  next(error);
+});
+
+app.use((err, req, res, next) => {
+  return res.status(err.status || 500).json(err.message || 'Unexpected error');
 });
 
 app.listen(3000, () => {
