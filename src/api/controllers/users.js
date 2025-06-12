@@ -1,7 +1,7 @@
 const { generateSign } = require('../../config/jwt');
 const Product = require('../models/products');
 const User = require('../models/users');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const register = async (req, res, next) => {
   try {
