@@ -1,5 +1,5 @@
 const { verifyJwt } = require('../config/jwt');
-const User = require('../api/models/users');
+const User = require('../backend/models/users');
 
 const isAuth = async (req, res, next) => {
   try {

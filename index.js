@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const { connectDB } = require('./src/config/db');
 const { configCloudinary } = require('./src/config/cloudinary');
-const mainRouter = require('./src/api/routes/main');
+const mainRouter = require('./src/backend/routes/main');
 
 const app = express();
 app.use(cors());
