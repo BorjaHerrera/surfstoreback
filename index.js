@@ -26,3 +26,5 @@ const BASE_URL = process.env.VERCEL_URL || `http://localhost:${PORT}`;
 app.listen(PORT, () => {
   console.log(`Servidor levantado en: ${BASE_URL}`);
 });
+
+module.exports = app;
