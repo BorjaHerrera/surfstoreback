@@ -26,8 +26,14 @@ app.use((err, req, res, next) => {
   return res.status(err.status || 500).json(err.message || 'Unexpected error');
 });
 
-app.listen(3000, () => {
-  console.log('Servidor levantado en : http://localhost:3000 ✅');
-});
+const PORT = process.env.PORT || 3000;
+
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(
+      `Servidor levantado para desarrollo en: http://localhost:${PORT} ✅`
+    );
+  });
+}
 
 module.exports = app;
