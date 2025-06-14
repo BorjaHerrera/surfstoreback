@@ -6,7 +6,8 @@ const {
   getCategoryById,
   putCategory,
   deleteCategory,
-  getCategoryBySlug
+  getCategoryBySlug,
+  getCategoryFilters
 } = require('../controllers/categories');
 
 const categoriesRouter = require('express').Router();
@@ -15,6 +16,7 @@ const adminProtect = [isAuth, isAdmin];
 
 categoriesRouter.get('/nombre/:name', getCategoryByName);
 categoriesRouter.get('/id/:id', getCategoryById);
+categoriesRouter.get('/filtradas', getCategoryFilters);
 categoriesRouter.get('/:slug', getCategoryBySlug);
 categoriesRouter.get('/', getCategories);
 categoriesRouter.post('/', adminProtect, postCategory);

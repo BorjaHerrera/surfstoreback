@@ -1,4 +1,5 @@
 const Category = require('../models/categories');
+const Product = require('../models/products');
 
 const getCategories = async (req, res, next) => {
   try {
@@ -44,6 +45,62 @@ const getCategoryBySlug = async (req, res, next) => {
   }
 };
 
+const cleanArray = (valuesArray) =>
+  valuesArray.filter((value) => value !== null && value !== undefined);
+
+const getCategoryFilters = async (req, res) => {
+  try {
+    const { section } = req.query;
+    if (!section) return res.status(400).json({ message: 'Falta la sección' });
+
+    const category = await Category.findOne({ slug: section });
+    if (!category) {
+      console.log('No se encontró categoría con slug:', section);
+      return res.status(404).json({ message: 'Sección no encontrada' });
+    }
+
+    const filters = { section: category._id };
+
+    const aggregation = await Product.aggregate([
+      { $match: filters },
+      {
+        $group: {
+          _id: null,
+          brands: { $addToSet: '$brand' },
+          styles: { $addToSet: '$style' },
+          genders: { $addToSet: '$gender' }
+        }
+      },
+      { $project: { _id: 0, brands: 1, styles: 1, genders: 1 } }
+    ]);
+
+    const result = aggregation[0] || { brands: [], styles: [], genders: [] };
+
+    // Limpiamos arrays de null o undefined
+    const cleanStyles = cleanArray(result.styles);
+    const cleanGenders = cleanArray(result.genders);
+    const cleanBrands = cleanArray(result.brands);
+
+    let filtersToShow;
+    let filterKey;
+
+    if (cleanStyles.length > 0) {
+      filtersToShow = { styles: cleanStyles };
+      filterKey = 'styles';
+    } else if (cleanGenders.length > 0) {
+      filtersToShow = { genders: cleanGenders };
+      filterKey = 'genders';
+    } else {
+      filtersToShow = { brands: cleanBrands };
+      filterKey = 'brands';
+    }
+
+    return res.status(200).json({ filters: filtersToShow, filterKey });
+  } catch (error) {
+    console.error('Error en getCategoryFilters:', error);
+    return res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
 const postCategory = async (req, res, next) => {
   try {
     const { name, extraFields = [] } = req.body;
@@ -143,6 +200,7 @@ module.exports = {
   getCategoryByName,
   getCategoryById,
   getCategoryBySlug,
+  getCategoryFilters,
   postCategory,
   putCategory,
   deleteCategory
