@@ -5,7 +5,17 @@ const cloudinary = require('cloudinary').v2;
 
 const getProducts = async (req, res, next) => {
   try {
-    const { section, brand, style, gender, maxPrice, name } = req.query;
+    const { section, brand, style, gender, maxPrice, name, sortPrice } =
+      req.query;
+
+    if (name) {
+      const regex = new RegExp(name, 'i');
+      const products = await Product.find({
+        $or: [{ name: regex }, { brand: regex }, { style: regex }]
+      }).populate('section', 'slug normalizedName name');
+
+      return res.status(200).json(products);
+    }
 
     const filters = {};
 
@@ -21,15 +31,25 @@ const getProducts = async (req, res, next) => {
     if (style) filters.style = style;
     if (gender) filters.gender = gender;
     if (maxPrice) filters.price = { $lte: Number(maxPrice) };
-    if (name) filters.name = new RegExp(name, 'i');
 
-    const products = await Product.find(filters).populate(
+    let query = Product.find(filters).populate(
       'section',
       'slug normalizedName name'
     );
+
+    if (sortPrice === 'asc') {
+      query = query.sort({ price: 1 });
+    } else if (sortPrice === 'desc') {
+      query = query.sort({ price: -1 });
+    }
+
+    const products = await query;
     return res.status(200).json(products);
   } catch (error) {
-    return res.status(400).json('Error al obtener productos con filtros');
+    return res.status(400).json({
+      message: 'Error al obtener productos con filtros',
+      error: error.message
+    });
   }
 };
 
