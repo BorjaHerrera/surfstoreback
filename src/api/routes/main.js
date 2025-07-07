@@ -1,8 +1,8 @@
 const categoriesRouter = require('./categories');
+const guestCartRouter = require('./guestCart');
 const productsRouter = require('./products');
 const songsRouter = require('./songs');
 const usersRouter = require('./users');
-const guestCartRouter = require('./cart');
 
 const mainRouter = require('express').Router();
 
