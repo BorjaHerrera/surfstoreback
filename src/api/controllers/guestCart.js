@@ -1,5 +1,16 @@
 const GuestCart = require('../models/guestCart');
 
+const createGuestCart = async (req, res) => {
+  try {
+    const newCart = new GuestCart({ items: [] });
+    await newCart.save();
+    return res.status(201).json({ cartId: newCart._id });
+  } catch (error) {
+    console.error('Error creando carrito invitado:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 const getGuestCart = async (req, res, next) => {
   try {
     const { cartId } = req.params;
@@ -86,4 +97,9 @@ const deleteGuestCartProduct = async (req, res) => {
   }
 };
 
-module.exports = { getGuestCart, addGuestCartProduct, deleteGuestCartProduct };
+module.exports = {
+  createGuestCart,
+  getGuestCart,
+  addGuestCartProduct,
+  deleteGuestCartProduct
+};
