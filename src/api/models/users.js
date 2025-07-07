@@ -13,7 +13,12 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     password: { type: String, required: true, trim: true },
     rol: { type: String, required: true, enum: ['admin', 'user'] },
-    cart: [{ type: mongoose.Types.ObjectId, ref: 'products' }]
+    cart: [
+      {
+        product: { type: mongoose.Types.ObjectId, ref: 'products' },
+        quantity: { type: Number, default: 1 }
+      }
+    ]
   },
   {
     timestamps: true,

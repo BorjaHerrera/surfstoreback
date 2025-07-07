@@ -103,42 +103,46 @@ const getUserCart = async (req, res, next) => {
   }
 };
 
-const addCartProduct = async (req, res, next) => {
+const addCartProduct = async (req, res) => {
   try {
-    let { cart } = req.body;
+    const { productId, quantity = 1 } = req.body;
+    const userId = req.user._id;
 
-    if (!cart) {
+    if (!productId) {
       return res.status(400).json({ message: 'Falta el ID del producto' });
     }
 
-    if (!Array.isArray(cart)) {
-      cart = [cart];
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    const products = await Product.find({ _id: { $in: cart } });
-
-    if (products.length !== cart.length) {
-      return res
-        .status(404)
-        .json({ message: 'Uno o más productos no fueron encontrados' });
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        $push: { cart: { $each: cart } }
-      },
-      { new: true }
-    ).populate('cart');
+    const existingItem = user.cart.find(
+      (item) => item.product.toString() === productId
+    );
 
-    return res.status(201).json({
-      message: `Los productos se han añadido a tu carrito.`,
-      user,
-      cart: user.cart
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      user.cart.push({ product: productId, quantity });
+    }
+
+    await user.save();
+
+    const populatedUser = await user.populate('cart.product').execPopulate();
+
+    return res.status(200).json({
+      message: 'Producto añadido al carrito',
+      cart: populatedUser.cart
     });
   } catch (error) {
-    console.error('Error al agregar los productos al carrito:', error);
-    return res.status(500).json({ message: 'Error del servidor' });
+    console.error('Error al agregar el producto al carrito:', error);
+    return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
@@ -201,30 +205,27 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
-const deleteProductCart = async (req, res, next) => {
+const deleteProductCart = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { productId } = req.body;
+    const userId = req.user._id;
+    const { productId } = req.params;
 
-    const user = await User.findByIdAndUpdate(
-      id,
-      { $pull: { cart: productId } },
-      { new: true }
-    ).populate('cart');
-
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    const deletedProduct = await Product.findById(productId);
+    user.cart = user.cart.filter(
+      (item) => item.product.toString() !== productId
+    );
 
-    if (!deletedProduct) {
-      return res.status(404).json({ message: 'Este producto no existe' });
-    }
+    await user.save();
+
+    const populatedUser = await user.populate('cart.product').execPopulate();
 
     return res.status(200).json({
       message: 'Producto eliminado del carrito',
-      deletedProduct
+      cart: populatedUser.cart
     });
   } catch (error) {
     console.error('Error al eliminar el producto del carrito:', error);
