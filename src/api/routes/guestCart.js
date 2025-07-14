@@ -8,7 +8,7 @@ const {
 const guestCartRouter = require('express').Router();
 
 guestCartRouter.get('/:cartId', getGuestCart);
-guestCartRouter.post('/', createGuestCart); // POST /cart
+guestCartRouter.post('/', createGuestCart);
 guestCartRouter.post('/:cartId/product', addGuestCartProduct);
 guestCartRouter.delete('/:cartId/product/:productId', deleteGuestCartProduct);
 

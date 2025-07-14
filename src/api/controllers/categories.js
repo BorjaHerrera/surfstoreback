@@ -71,29 +71,26 @@ const getCategoryFilters = async (req, res) => {
           genders: { $addToSet: '$gender' }
         }
       },
-      { $project: { _id: 0, brands: 1, styles: 1, genders: 1 } }
+      { $project: { _id: 0, brands: 1, styles: 1, genders: 1 } } // 👈 coincide con $group
     ]);
 
     const result = aggregation[0] || { brands: [], styles: [], genders: [] };
 
-    // Limpiamos arrays de null o undefined
     const cleanStyles = cleanArray(result.styles);
     const cleanGenders = cleanArray(result.genders);
     const cleanBrands = cleanArray(result.brands);
 
-    let filtersToShow;
-    let filterKey;
+    // Siempre devolvemos todos los filtros posibles en singular
+    const filtersToShow = {};
+    if (cleanBrands.length) filtersToShow.brand = cleanBrands;
+    if (cleanStyles.length) filtersToShow.style = cleanStyles;
+    if (cleanGenders.length) filtersToShow.gender = cleanGenders;
 
-    if (cleanStyles.length > 0) {
-      filtersToShow = { styles: cleanStyles };
-      filterKey = 'styles';
-    } else if (cleanGenders.length > 0) {
-      filtersToShow = { genders: cleanGenders };
-      filterKey = 'genders';
-    } else {
-      filtersToShow = { brands: cleanBrands };
-      filterKey = 'brands';
-    }
+    // Elegimos una clave principal solo para navegación o resaltado
+    let filterKey = null;
+    if (cleanStyles.length > 0) filterKey = 'style';
+    else if (cleanGenders.length > 0) filterKey = 'gender';
+    else if (cleanBrands.length > 0) filterKey = 'brand';
 
     return res.status(200).json({ filters: filtersToShow, filterKey });
   } catch (error) {
@@ -101,6 +98,7 @@ const getCategoryFilters = async (req, res) => {
     return res.status(500).json({ message: 'Error en el servidor' });
   }
 };
+
 const postCategory = async (req, res, next) => {
   try {
     const { name, extraFields = [] } = req.body;
