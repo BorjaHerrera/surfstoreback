@@ -86,7 +86,6 @@ const getCategoryFilters = async (req, res) => {
     if (cleanStyles.length) filtersToShow.style = cleanStyles;
     if (cleanGenders.length) filtersToShow.gender = cleanGenders;
 
-    // Elegimos una clave principal solo para navegación o resaltado
     let filterKey = null;
     if (cleanStyles.length > 0) filterKey = 'style';
     else if (cleanGenders.length > 0) filterKey = 'gender';

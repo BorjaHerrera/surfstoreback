@@ -70,6 +70,40 @@ const addGuestCartProduct = async (req, res) => {
   }
 };
 
+const updateGuestCartQuantity = async (req, res, next) => {
+  try {
+    const { cartId, productId } = req.params;
+    const { quantity } = req.body;
+
+    if (!cartId || !productId || quantity == null) {
+      return res
+        .status(400)
+        .json({ error: 'Faltan cartId, productId o quantity' });
+    }
+
+    const cart = await GuestCart.findById(cartId);
+    if (!cart) {
+      return res.status(404).json({ error: 'Carrito no encontrado' });
+    }
+
+    const item = cart.items.find(
+      (item) => item.product.toString() === productId
+    );
+    if (!item) {
+      return res
+        .status(404)
+        .json({ error: 'Producto no encontrado en el carrito' });
+    }
+
+    item.quantity = quantity;
+    await cart.save();
+    return res.status(200).json(cart);
+  } catch (error) {
+    console.error('Error actualizando cantidad:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 const deleteGuestCartProduct = async (req, res) => {
   try {
     const { cartId, productId } = req.params;
@@ -101,5 +135,6 @@ module.exports = {
   createGuestCart,
   getGuestCart,
   addGuestCartProduct,
+  updateGuestCartQuantity,
   deleteGuestCartProduct
 };
