@@ -205,6 +205,39 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+const updateUserCartQuantity = async (req, res) => {
+  try {
+    const { id: userId, productId } = req.params;
+    const { quantity } = req.body;
+
+    if (!productId || quantity == null) {
+      return res.status(400).json({ error: 'Falta productId o quantity' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const item = user.cart.find(
+      (item) => item.product.toString() === productId
+    );
+    if (!item) {
+      return res
+        .status(404)
+        .json({ error: 'Producto no encontrado en el carrito' });
+    }
+
+    item.quantity = quantity;
+    await user.save();
+
+    return res.status(200).json(user.cart);
+  } catch (err) {
+    console.error('Error actualizando carrito de usuario:', err);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 const deleteProductCart = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -241,6 +274,7 @@ module.exports = {
   getUserCart,
   addCartProduct,
   putUser,
+  updateUserCartQuantity,
   deleteUser,
   deleteProductCart
 };

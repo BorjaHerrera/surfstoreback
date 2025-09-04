@@ -8,7 +8,8 @@ const {
   addCartProduct,
   putUser,
   deleteUser,
-  deleteProductCart
+  deleteProductCart,
+  updateUserCartQuantity
 } = require('../controllers/users');
 const User = require('../models/users');
 
@@ -26,6 +27,11 @@ usersRouter.get('/', [isAuth, isAdmin], getUsers);
 usersRouter.post('/:id/cart', protectUser, addCartProduct);
 
 usersRouter.put('/:id', protectUser, putUser);
+usersRouter.put(
+  '/:id/cart/product/:productId',
+  protectUser,
+  updateUserCartQuantity
+);
 
 usersRouter.delete('/:id', protectUser, deleteUser);
 usersRouter.delete('/:id/cart', protectUser, deleteProductCart);
