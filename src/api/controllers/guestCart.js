@@ -55,13 +55,9 @@ const addGuestCartProduct = async (req, res) => {
     const qty = Number(quantity);
 
     // Buscar producto en carrito (poblado o no poblado)
-    const existingItem = cart.items.find((item) => {
-      const id =
-        typeof item.product === 'object'
-          ? item.product._id.toString()
-          : item.product.toString();
-      return id === productId;
-    });
+    const existingItem = cart.items.find(
+      (item) => String(item.product?._id || item.product) === String(productId)
+    );
 
     if (existingItem) {
       existingItem.quantity += qty;
@@ -82,7 +78,7 @@ const addGuestCartProduct = async (req, res) => {
 const updateGuestCartQuantity = async (req, res, next) => {
   try {
     const { cartId, productId } = req.params;
-    const { quantity } = req.body;
+    let { quantity } = req.body;
 
     if (!cartId || !productId || quantity == null) {
       return res
@@ -90,16 +86,21 @@ const updateGuestCartQuantity = async (req, res, next) => {
         .json({ error: 'Faltan cartId, productId o quantity' });
     }
 
+    quantity = Number(quantity); // Normalizamos la cantidad a número
+
     const cart = await GuestCart.findById(cartId);
     if (!cart) {
       return res.status(404).json({ error: 'Carrito no encontrado' });
     }
 
-    const item = cart.items.find(
-      (item) =>
-        item.product._id?.toString() === productId ||
-        item.product.toString() === productId
-    );
+    // Buscar el producto en el carrito, manejando poblado o no poblado
+    const item = cart.items.find((item) => {
+      const id =
+        item.product && typeof item.product === 'object'
+          ? item.product._id.toString()
+          : item.product.toString();
+      return id === productId;
+    });
 
     if (!item) {
       return res
@@ -108,8 +109,12 @@ const updateGuestCartQuantity = async (req, res, next) => {
     }
 
     item.quantity = quantity;
+
     await cart.save();
+
+    // Populamos antes de enviar la respuesta
     await cart.populate('items.product');
+
     return res.status(200).json(cart);
   } catch (error) {
     console.error('Error actualizando cantidad:', error);
