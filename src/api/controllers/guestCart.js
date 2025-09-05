@@ -85,6 +85,12 @@ const updateGuestCartQuantity = async (req, res) => {
 
     const cart = await GuestCart.findById(cartId);
     if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
+    console.log('Items en el carrito:', cart.items);
+    console.log('productId recibido:', productId);
+    console.log(
+      'Comparando con:',
+      cart.items.map((i) => i.product.toString())
+    );
 
     const item = cart.items.find((i) => String(i.product) === String(prodId));
 
