@@ -51,16 +51,22 @@ const addGuestCartProduct = async (req, res) => {
       return res.status(404).json({ error: 'Carrito no encontrado' });
     }
 
-    const existingItem = cart.items.find(
-      (item) =>
-        item.product._id?.toString() === productId ||
-        item.product.toString() === productId
-    );
+    // Normalizamos la cantidad a número
+    const qty = Number(quantity);
+
+    // Buscar producto en carrito (poblado o no poblado)
+    const existingItem = cart.items.find((item) => {
+      const id =
+        typeof item.product === 'object'
+          ? item.product._id.toString()
+          : item.product.toString();
+      return id === productId;
+    });
 
     if (existingItem) {
-      existingItem.quantity += quantity;
+      existingItem.quantity += qty;
     } else {
-      cart.items.push({ product: productId, quantity });
+      cart.items.push({ product: productId, quantity: qty });
     }
 
     await cart.save();
