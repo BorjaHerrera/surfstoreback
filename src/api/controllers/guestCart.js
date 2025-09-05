@@ -52,7 +52,9 @@ const addGuestCartProduct = async (req, res) => {
     }
 
     const existingItem = cart.items.find(
-      (item) => item.product.toString() === productId
+      (item) =>
+        item.product._id?.toString() === productId ||
+        item.product.toString() === productId
     );
 
     if (existingItem) {
@@ -62,6 +64,7 @@ const addGuestCartProduct = async (req, res) => {
     }
 
     await cart.save();
+    await cart.populate('items.product');
 
     return res.status(200).json(cart);
   } catch (error) {
@@ -87,8 +90,11 @@ const updateGuestCartQuantity = async (req, res, next) => {
     }
 
     const item = cart.items.find(
-      (item) => item.product.toString() === productId
+      (item) =>
+        item.product._id?.toString() === productId ||
+        item.product.toString() === productId
     );
+
     if (!item) {
       return res
         .status(404)
@@ -97,6 +103,7 @@ const updateGuestCartQuantity = async (req, res, next) => {
 
     item.quantity = quantity;
     await cart.save();
+    await cart.populate('items.product');
     return res.status(200).json(cart);
   } catch (error) {
     console.error('Error actualizando cantidad:', error);
