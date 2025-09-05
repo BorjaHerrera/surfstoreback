@@ -13,7 +13,7 @@ const createGuestCart = async (req, res) => {
   }
 };
 
-const getGuestCart = async (req, res, next) => {
+const getGuestCart = async (req, res) => {
   try {
     const { cartId } = req.params;
 
@@ -22,7 +22,6 @@ const getGuestCart = async (req, res, next) => {
     }
 
     const cart = await GuestCart.findById(cartId).populate('items.product');
-
     if (!cart) {
       return res.status(404).json({ error: 'Carrito no encontrado' });
     }
@@ -34,6 +33,7 @@ const getGuestCart = async (req, res, next) => {
   }
 };
 
+// Añadir producto al carrito de invitado
 const addGuestCartProduct = async (req, res) => {
   try {
     const { cartId } = req.params;
@@ -47,7 +47,10 @@ const addGuestCartProduct = async (req, res) => {
     if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
 
     const qty = Number(quantity);
-    const prodId = ObjectId(productId);
+    const prodId = new ObjectId(productId);
+
+    // Log para depuración
+    console.log('Añadiendo producto:', { cartId, productId, qty });
 
     const existingItem = cart.items.find(
       (item) => String(item.product) === String(prodId)
@@ -62,6 +65,9 @@ const addGuestCartProduct = async (req, res) => {
     await cart.save();
     await cart.populate('items.product');
 
+    // Log para ver el estado del carrito tras añadir
+    console.log('Carrito tras añadir:', cart.items);
+
     return res.status(200).json(cart);
   } catch (error) {
     console.error('Error añadiendo producto al carrito invitado:', error);
@@ -69,6 +75,7 @@ const addGuestCartProduct = async (req, res) => {
   }
 };
 
+// Actualizar cantidad de producto en carrito de invitado
 const updateGuestCartQuantity = async (req, res) => {
   try {
     const { cartId, productId } = req.params;
@@ -81,10 +88,12 @@ const updateGuestCartQuantity = async (req, res) => {
     }
 
     quantity = Number(quantity);
-    const prodId = ObjectId(productId);
+    const prodId = new ObjectId(productId);
 
     const cart = await GuestCart.findById(cartId);
     if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
+
+    // Logs para depuración
     console.log('Items en el carrito:', cart.items);
     console.log('productId recibido:', productId);
     console.log(
@@ -103,6 +112,9 @@ const updateGuestCartQuantity = async (req, res) => {
     item.quantity = quantity;
     await cart.save();
     await cart.populate('items.product');
+
+    // Log para ver el estado del carrito tras actualizar
+    console.log('Carrito tras actualizar:', cart.items);
 
     return res.status(200).json(cart);
   } catch (error) {
