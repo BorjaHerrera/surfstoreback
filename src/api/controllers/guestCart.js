@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const { ObjectId } = mongoose.Types;
 const GuestCart = require('../models/guestCart');
 
 const createGuestCart = async (req, res) => {
@@ -37,32 +39,24 @@ const addGuestCartProduct = async (req, res) => {
     const { cartId } = req.params;
     const { productId, quantity = 1 } = req.body;
 
-    if (!cartId) {
-      return res.status(400).json({ error: 'Se requiere cartId' });
-    }
-
-    if (!productId) {
-      return res.status(400).json({ error: 'Se requiere productId' });
+    if (!cartId || !productId) {
+      return res.status(400).json({ error: 'Se requiere cartId y productId' });
     }
 
     const cart = await GuestCart.findById(cartId);
+    if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
 
-    if (!cart) {
-      return res.status(404).json({ error: 'Carrito no encontrado' });
-    }
-
-    // Normalizamos la cantidad a número
     const qty = Number(quantity);
+    const prodId = ObjectId(productId);
 
-    // Buscar producto en carrito (poblado o no poblado)
     const existingItem = cart.items.find(
-      (item) => String(item.product?._id || item.product) === String(productId)
+      (item) => String(item.product) === String(prodId)
     );
 
     if (existingItem) {
       existingItem.quantity += qty;
     } else {
-      cart.items.push({ product: productId, quantity: qty });
+      cart.items.push({ product: prodId, quantity: qty });
     }
 
     await cart.save();
@@ -75,7 +69,7 @@ const addGuestCartProduct = async (req, res) => {
   }
 };
 
-const updateGuestCartQuantity = async (req, res, next) => {
+const updateGuestCartQuantity = async (req, res) => {
   try {
     const { cartId, productId } = req.params;
     let { quantity } = req.body;
@@ -86,21 +80,13 @@ const updateGuestCartQuantity = async (req, res, next) => {
         .json({ error: 'Faltan cartId, productId o quantity' });
     }
 
-    quantity = Number(quantity); // Normalizamos la cantidad a número
+    quantity = Number(quantity);
+    const prodId = ObjectId(productId);
 
     const cart = await GuestCart.findById(cartId);
-    if (!cart) {
-      return res.status(404).json({ error: 'Carrito no encontrado' });
-    }
+    if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
 
-    // Buscar el producto en el carrito, manejando poblado o no poblado
-    const item = cart.items.find((item) => {
-      const id =
-        item.product && typeof item.product === 'object'
-          ? item.product._id.toString()
-          : item.product.toString();
-      return id === productId;
-    });
+    const item = cart.items.find((i) => String(i.product) === String(prodId));
 
     if (!item) {
       return res
@@ -109,10 +95,7 @@ const updateGuestCartQuantity = async (req, res, next) => {
     }
 
     item.quantity = quantity;
-
     await cart.save();
-
-    // Populamos antes de enviar la respuesta
     await cart.populate('items.product');
 
     return res.status(200).json(cart);
@@ -121,7 +104,6 @@ const updateGuestCartQuantity = async (req, res, next) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
-
 const deleteGuestCartProduct = async (req, res) => {
   try {
     const { cartId, productId } = req.params;
